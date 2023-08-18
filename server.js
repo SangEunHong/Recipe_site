@@ -3,25 +3,21 @@ const app = express();
 app.use(express.urlencoded({extended: true})) 
 const MongoClient = require('mongodb').MongoClient;
 const methodOverride = require('method-override')
+require('dotenv').config()
 app.use(methodOverride('_method'))
 app.set('view engine', 'ejs');
 app.use('/public', express.static('public'));
-require('dotenv').config()
 
-var db;//변수 하나 필요
-MongoClient.connect('process.env.DB_URL', function(에러, client){
+
+var db; //변수 하나 필요
+  MongoClient.connect(process.env.DB_URL, function(에러, client){
     //연결되면 할일
-    if(에러) return console.log(에러)
-
-    db = client.db('todoapp');//todoapp이라는 database(폴더)에 연결
-
-    app.listen(process.env.PORT, function (){//listen(파라미터1(서버띄울 포트번호),파라미터2(띄운 후 실행할 코드))
-        console.log('listening on 3000')//3000포트에 서버 띄어 주세요
-    });
-
-})
-
-
+  if (에러) return console.log(에러)
+  db = client.db('todoapp'); //todoapp이라는 database(폴더)에 연결
+  app.listen(process.env.PORT, function() {//listen(파라미터1(서버띄울 포트번호),파라미터2(띄운 후 실행할 코드))
+    console.log('listening on 3000')//3000포트에 서버 띄어 주세요
+  })
+}) 
 
 //누군가가 /pet으로 방문을 하면..
 //pet 관련된 안내문을 띄워주자
