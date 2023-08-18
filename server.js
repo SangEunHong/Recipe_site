@@ -61,13 +61,31 @@ app.post('/add', function (요청, 응답){//누가 폼에서 /add로 POST 요�
 app.get('/list', function(요청, 응답){
 
     db.collection('post').find().toArray(function(에러, 결과){
-        console.log(결과);//DB에서 자료 찾아주세요
+        //console.log(결과);//DB에서 자료 찾아주세요
         응답.render('list.ejs', { posts : 결과});//찾은걸 ejs파일에 집어넣어주세요
     });
 
-
     //디비에 저장된 post라는 clooection안의 모든 데이터를 꺼내주세요
 });
+
+app.get('/search', (요청, 응답) => {
+    var 검색조건 = [
+        {
+          $search: {
+            index: 'titleSearch1',
+            text: {
+              query: 요청.query.value,
+              path: '제목'  // 제목날짜 둘다 찾고 싶으면 ['제목', '날짜']
+            }
+          }
+        },
+        { $limit : 2}
+      ] 
+    db.collection('post').aggregate(검색조건).toArray((에러, 결과)=>{
+        console.log(결과)
+        응답.render('search.ejs', {posts : 결과});//ejs에 결과 보내기
+    })
+})
 
 app.delete('/delete', function(요청, 응답){
     console.log(요청.body);
@@ -169,3 +187,4 @@ passport.use(new LocalStrategy({
     })
     
 });
+
