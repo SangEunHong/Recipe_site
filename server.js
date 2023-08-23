@@ -38,22 +38,7 @@ app.get('/write', function(요청, 응답) {
     응답.render(__dirname +'/views/write.ejs')
   });
 
-app.post('/add', function (요청, 응답){//누가 폼에서 /add로 POST 요청하면
-    응답.send('전송완료');
-    db.collection('counter').findOne({name: '게시물갯수'}, function(에러, 결과){//DB.counter 내의 총게시물갯수를 찾음
-        console.log(결과.totalPost)//총 게시물 갯수
-        var 총게시물갯수 = 결과.totalPost;//let,const//총게시물갯수를 변수에 저장
 
-        db.collection('post').insertOne({_id : 총게시물갯수 + 1, 제목: 요청.body.title, 날짜: 요청.body.date}, function(에러, 결과){//DB.post에 새게시물 기록함
-            console.log('저장완료');
-            //counter라는 콜렉션에 있는 totalPost 라는 항목도 1 증가시켜야함(수정);
-            db.collection('counter').updateOne({name: '게시물갯수'},{ $inc : {totalPost:1}}, function(){//완료되면 DB.counter 내의 총 게시물갯수 +1
-                if(에러){return console.log(에러)}
-            })//데이터 수정시 operator를 써야함
-        });//데이터 저장
-    });
-
-});
 
 ///list 로 GET요청으로 접속하면
 //실제 DB에 저장된 데이터들로 예쁘게 꾸며진 HTML을 보여줌
@@ -87,15 +72,7 @@ app.get('/search', (요청, 응답) => {
     })
 })
 
-app.delete('/delete', function(요청, 응답){
-    console.log(요청.body);
-    요청.body._id = parseInt(요청.body._id);
-    //요청.body에 담겨온 게시물번호를 가진 글을 db에서 찾아서 삭제해주세요
-    db.collection('post').deleteOne(요청.body, function(에러, 결과){
-        console.log('삭제완료');
-        응답.status(200).send({ message  : '성공했습니다' });//응답코드 200을 보내주세요
-    })
-})
+
 
 //detail 로  접속하면 detail.ejs 보여줌
 
@@ -188,3 +165,48 @@ passport.use(new LocalStrategy({
     
 });
 
+
+//회원기능이 필요하면 passport요청하는부분이 위에 있어야함
+//</회원가입>
+//저장전에 id가 이미 있는지 먼저 찾아 봐야함
+//id에 알파벳 숫자만 잘 들어 있는지
+//비번 저장전에 암호화 했는지
+app.post('/register', function(요청, 응답){
+  db.collection('login').insertOne( { id : 요청.body.id, pw : 요청.body.pw }, function(에러, 결과){
+    응답.redirect('/')
+    
+  })
+})
+
+app.post('/add', function (요청, 응답){//누가 폼에서 /add로 POST 요청하면
+  응답.send('전송완료');
+  db.collection('counter').findOne({name: '게시물갯수'}, function(에러, 결과){//DB.counter 내의 총게시물갯수를 찾음
+      console.log(결과.totalPost)//총 게시물 갯수
+      var 총게시물갯수 = 결과.totalPost;//let,const//총게시물갯수를 변수에 저장
+
+      var 저장할것 = {_id : 총게시물갯수 + 1, 작성자 : 요청.user._id, 제목: 요청.body.title, 날짜: 요청.body.date, };
+  
+      db.collection('post').insertOne(저장할것, function(에러, 결과){//DB.post에 새게시물 기록함
+          console.log('저장완료');
+          //counter라는 콜렉션에 있는 totalPost 라는 항목도 1 증가시켜야함(수정);
+          db.collection('counter').updateOne({name: '게시물갯수'},{ $inc : {totalPost:1}}, function(){//완료되면 DB.counter 내의 총 게시물갯수 +1
+              if(에러){return console.log(에러)}
+          })//데이터 수정시 operator를 써야함
+      });//데이터 저장
+  });
+
+});
+
+app.delete('/delete', function(요청, 응답){
+  console.log(요청.body);
+  요청.body._id = parseInt(요청.body._id);
+
+  var 삭제할데이터 = { _id : 요청.body._id, 작성자 : 요청.user.id }
+
+  //요청.body에 담겨온 게시물번호를 가진 글을 db에서 찾아서 삭제해주세요
+  db.collection('post').deleteOne(삭제할데이터, function(에러, 결과){
+      console.log('삭제완료');
+      if (결과) {console.log(결과)}
+      응답.status(200).send({ message  : '성공했습니다' });//응답코드 200을 보내주세요
+  })
+})
