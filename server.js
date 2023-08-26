@@ -15,7 +15,7 @@ var db; //변수 하나 필요
   if (에러) return console.log(에러)
   db = client.db('todoapp'); //todoapp이라는 database(폴더)에 연결
   app.listen(process.env.PORT, function() {//listen(파라미터1(서버띄울 포트번호),파라미터2(띄운 후 실행할 코드))
-    console.log('listening on 3000')//3000포트에 서버 띄어 주세요
+    console.log('listening on 8080')//3000포트에 서버 띄어 주세요
   })
 }) 
 
@@ -104,7 +104,7 @@ const LocalStrategy = require('passport-local').Strategy;
 const session = require('express-session');
 
 app.use(session({secret : '비밀코드', resave : true, saveUninitialized: false}));
-app.use(passport.initialize());
+app.use(passport.initialize());//미들웨어: 요청과 응답 사이에 실행되는 코드
 app.use(passport.session()); 
 
 
@@ -210,3 +210,39 @@ app.delete('/delete', function(요청, 응답){
       응답.status(200).send({ message  : '성공했습니다' });//응답코드 200을 보내주세요
   })
 })
+
+            //고객이 /경로로 요청했을때 이런 미들웨어 적용해주세요
+app.use('/', require('./routes/shop.js'))//shop.js라우터 첨부
+app.use('/board', require('./routes/board.js'))
+
+// app.get('/shop/shirts', function(요청, 응답){
+//   응답.send('셔츠 판매 페이지입니다.');
+// });
+
+// app.get('/shop/pants', function(요청, 응답){
+//   응답.send('바지 파는 페이지입니다.');
+// });
+
+let multer = require('multer');
+var storage = multer.diskStorage({
+  destination : function(req, file, cb){
+    cb(null, './public/image')
+  },
+  filename : function(req, file, cb){
+    cb(null, file.originalname )
+  }
+});
+
+var upload = multer({storage : storage});
+
+app.get('/upload', function(요청, 응답){
+  응답.render('upload.ejs')
+}); 
+
+app.post('/upload', upload.single('profile'), function(요청, 응답){
+  응답.send('업로드완료')
+}); 
+
+app.get('/image/:imageName', function(요청, 응답){
+  응답.sendFile( __dirname + '/public/image/' + 요청.params.imageName)
+})              //현재 파일 경로
